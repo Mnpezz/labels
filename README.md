@@ -1,4 +1,4 @@
-# 🏷️ JuiceSee — Expiration Label Maker
+# 🏷️ Labels - Expiration Date
 
 A lightweight, fully client-side web application designed to automatically calculate expiration dates, overlay them onto juice label templates, and print them directly to circular thermal label printers (like Munbyn or Rollo) or batch-download them.
 
