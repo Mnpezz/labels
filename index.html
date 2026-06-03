@@ -7,7 +7,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>JuiceSee — Expiration Label Maker</title>
+    <title>Label Expiration Date Maker</title>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -545,7 +545,7 @@
         <header>
             <div class="logo-container">
                 <div class="logo-icon">J</div>
-                <h1>JuiceSee Label Maker</h1>
+                <h1>Label Maker</h1>
             </div>
             <div style="font-size: 0.85rem; color: var(--text-muted);">
                 100% In-Browser. No Servers.
@@ -602,7 +602,8 @@
                                 placeholder="e.g. EXP: ">
                         </div>
                         <div>
-                            <label for="global-days">{{ globalMode === 'custom-date' ? 'Days After Date' : 'Days After Today' }}</label>
+                            <label for="global-days">{{ globalMode === 'custom-date' ? 'Days After Date' : 'Days After
+                                Today' }}</label>
                             <input type="number" id="global-days" v-model="globalDays" @input="updateAllPreviews"
                                 min="0">
                         </div>
@@ -640,17 +641,20 @@
                 <div class="control-group">
                     <div class="section-title">Default Template Scale & Pan</div>
                     <label>Default Label Zoom: {{ Math.round(globalZoom * 100) }}%</label>
-                    <input type="range" v-model.number="globalZoom" min="0.5" max="2.5" step="0.01" @input="updateAllPreviews" style="width: 100%;">
-                    
+                    <input type="range" v-model.number="globalZoom" min="0.5" max="2.5" step="0.01"
+                        @input="updateAllPreviews" style="width: 100%;">
+
                     <label style="margin-top: 0.5rem;">Default Label Pan Offset</label>
                     <div class="offset-sliders">
                         <div>
                             <span style="font-size: 0.75rem; color: var(--text-muted);">X: {{ globalPanX }}px</span>
-                            <input type="range" v-model.number="globalPanX" min="-300" max="300" @input="updateAllPreviews">
+                            <input type="range" v-model.number="globalPanX" min="-300" max="300"
+                                @input="updateAllPreviews">
                         </div>
                         <div>
                             <span style="font-size: 0.75rem; color: var(--text-muted);">Y: {{ globalPanY }}px</span>
-                            <input type="range" v-model.number="globalPanY" min="-300" max="300" @input="updateAllPreviews">
+                            <input type="range" v-model.number="globalPanY" min="-300" max="300"
+                                @input="updateAllPreviews">
                         </div>
                     </div>
                 </div>
@@ -681,7 +685,8 @@
                 </div>
 
                 <!-- Reset Database & Settings -->
-                <div class="control-group" style="margin-top: auto; display: flex; flex-direction: column; gap: 0.5rem;" v-if="labels.length > 0">
+                <div class="control-group" style="margin-top: auto; display: flex; flex-direction: column; gap: 0.5rem;"
+                    v-if="labels.length > 0">
                     <button class="btn btn-secondary" @click="resetSettingsToDefault">
                         ⚙️ Reset Global Settings
                     </button>
@@ -809,8 +814,10 @@
                             <div class="control-group">
                                 <div class="toggle-container" style="padding: 0.5rem; margin-top: 0.25rem;">
                                     <label style="font-size: 0.75rem; color: var(--text-muted);">Custom Position</label>
-                                    <label class="switch" style="transform: scale(0.85); transform-origin: right center;">
-                                        <input type="checkbox" v-model="label.customPosition" @change="toggleCustomPosition(label)">
+                                    <label class="switch"
+                                        style="transform: scale(0.85); transform-origin: right center;">
+                                        <input type="checkbox" v-model="label.customPosition"
+                                            @change="toggleCustomPosition(label)">
                                         <span class="slider"></span>
                                     </label>
                                 </div>
@@ -818,12 +825,16 @@
                             <div class="control-group" v-if="label.customPosition" style="margin-top: 0.25rem;">
                                 <div class="offset-sliders" style="grid-template-columns: 1fr 1fr; gap: 0.5rem;">
                                     <div>
-                                        <span style="font-size: 0.7rem; color: var(--text-muted);">X: {{ label.xOffset }}px</span>
-                                        <input type="range" v-model="label.xOffset" min="-300" max="300" @input="updateSinglePreview(label)" style="width: 100%;">
+                                        <span style="font-size: 0.7rem; color: var(--text-muted);">X: {{ label.xOffset
+                                            }}px</span>
+                                        <input type="range" v-model="label.xOffset" min="-300" max="300"
+                                            @input="updateSinglePreview(label)" style="width: 100%;">
                                     </div>
                                     <div>
-                                        <span style="font-size: 0.7rem; color: var(--text-muted);">Y: {{ label.yOffset }}px</span>
-                                        <input type="range" v-model="label.yOffset" min="-300" max="300" @input="updateSinglePreview(label)" style="width: 100%;">
+                                        <span style="font-size: 0.7rem; color: var(--text-muted);">Y: {{ label.yOffset
+                                            }}px</span>
+                                        <input type="range" v-model="label.yOffset" min="-300" max="300"
+                                            @input="updateSinglePreview(label)" style="width: 100%;">
                                     </div>
                                 </div>
                             </div>
@@ -831,9 +842,12 @@
                             <!-- Custom Scale & Pan Toggle -->
                             <div class="control-group">
                                 <div class="toggle-container" style="padding: 0.5rem; margin-top: 0.25rem;">
-                                    <label style="font-size: 0.75rem; color: var(--text-muted);">Custom Scale & Pan</label>
-                                    <label class="switch" style="transform: scale(0.85); transform-origin: right center;">
-                                        <input type="checkbox" v-model="label.customTransform" @change="toggleCustomTransform(label)">
+                                    <label style="font-size: 0.75rem; color: var(--text-muted);">Custom Scale &
+                                        Pan</label>
+                                    <label class="switch"
+                                        style="transform: scale(0.85); transform-origin: right center;">
+                                        <input type="checkbox" v-model="label.customTransform"
+                                            @change="toggleCustomTransform(label)">
                                         <span class="slider"></span>
                                     </label>
                                 </div>
@@ -841,8 +855,10 @@
 
                             <!-- Label Zoom -->
                             <div class="control-group" v-if="label.customTransform">
-                                <span style="font-size: 0.75rem; color: var(--text-muted);">Label Zoom: {{ Math.round((label.zoom || 1.0) * 100) }}%</span>
-                                <input type="range" v-model.number="label.zoom" min="0.5" max="2.5" step="0.01" @input="updateSinglePreview(label)" style="width: 100%;">
+                                <span style="font-size: 0.75rem; color: var(--text-muted);">Label Zoom: {{
+                                    Math.round((label.zoom || 1.0) * 100) }}%</span>
+                                <input type="range" v-model.number="label.zoom" min="0.5" max="2.5" step="0.01"
+                                    @input="updateSinglePreview(label)" style="width: 100%;">
                             </div>
 
                             <!-- Label Pan -->
@@ -850,12 +866,16 @@
                                 <label style="font-size: 0.75rem; color: var(--text-muted);">Label Pan Offset</label>
                                 <div class="offset-sliders" style="grid-template-columns: 1fr 1fr; gap: 0.5rem;">
                                     <div>
-                                        <span style="font-size: 0.7rem; color: var(--text-muted);">X: {{ label.panX || 0 }}px</span>
-                                        <input type="range" v-model.number="label.panX" min="-300" max="300" @input="updateSinglePreview(label)" style="width: 100%;">
+                                        <span style="font-size: 0.7rem; color: var(--text-muted);">X: {{ label.panX || 0
+                                            }}px</span>
+                                        <input type="range" v-model.number="label.panX" min="-300" max="300"
+                                            @input="updateSinglePreview(label)" style="width: 100%;">
                                     </div>
                                     <div>
-                                        <span style="font-size: 0.7rem; color: var(--text-muted);">Y: {{ label.panY || 0 }}px</span>
-                                        <input type="range" v-model.number="label.panY" min="-300" max="300" @input="updateSinglePreview(label)" style="width: 100%;">
+                                        <span style="font-size: 0.7rem; color: var(--text-muted);">Y: {{ label.panY || 0
+                                            }}px</span>
+                                        <input type="range" v-model.number="label.panY" min="-300" max="300"
+                                            @input="updateSinglePreview(label)" style="width: 100%;">
                                     </div>
                                 </div>
                             </div>
@@ -863,8 +883,8 @@
                             <!-- Print Quantity -->
                             <div class="control-group">
                                 <label style="font-size: 0.75rem; color: var(--text-muted);">Print Quantity</label>
-                                <input type="number" v-model="label.quantity" @change="persistLabels"
-                                    min="1" style="padding: 0.4rem; font-size: 0.85rem;" placeholder="1">
+                                <input type="number" v-model="label.quantity" @change="persistLabels" min="1"
+                                    style="padding: 0.4rem; font-size: 0.85rem;" placeholder="1">
                             </div>
 
                             <div class="card-actions">
@@ -1306,15 +1326,15 @@
 
                     const ctx = canvas.getContext('2d');
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    
+
                     // Draw a solid white background (ensures white margins when zoomed out)
                     ctx.fillStyle = '#ffffff';
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    
+
                     const useZoom = label.customTransform && label.zoom !== undefined && label.zoom !== null ? Number(label.zoom) : this.globalZoom;
                     const usePanX = label.customTransform && label.panX !== undefined && label.panX !== null ? Number(label.panX) : this.globalPanX;
                     const usePanY = label.customTransform && label.panY !== undefined && label.panY !== null ? Number(label.panY) : this.globalPanY;
-                    
+
                     const w = img.width * useZoom;
                     const h = img.height * useZoom;
                     const x = (canvas.width - w) / 2 + usePanX;
