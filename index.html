@@ -126,6 +126,7 @@
 
         input[type="text"],
         input[type="number"],
+        input[type="date"],
         select {
             width: 100%;
             background-color: var(--bg-card);
@@ -140,6 +141,7 @@
 
         input[type="text"]:focus,
         input[type="number"]:focus,
+        input[type="date"]:focus,
         select:focus {
             border-color: var(--primary);
             box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.25);
@@ -577,6 +579,7 @@
                     <label for="global-mode">Default Expiration Mode</label>
                     <select id="global-mode" v-model="globalMode" @change="updateAllPreviews">
                         <option value="days">Days from Today (Automatic)</option>
+                        <option value="custom-date">Days from Custom Date</option>
                         <option value="static">Static Text</option>
                     </select>
                 </div>
@@ -588,6 +591,10 @@
                 </div>
 
                 <div class="control-group" v-else>
+                    <div v-if="globalMode === 'custom-date'" style="margin-bottom: 0.5rem;">
+                        <label for="global-base-date">Base Date</label>
+                        <input type="date" id="global-base-date" v-model="globalBaseDate" @change="updateAllPreviews">
+                    </div>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
                         <div>
                             <label for="global-prefix">Prefix</label>
@@ -595,7 +602,7 @@
                                 placeholder="e.g. EXP: ">
                         </div>
                         <div>
-                            <label for="global-days">Days After Today</label>
+                            <label for="global-days">{{ globalMode === 'custom-date' ? 'Days After Date' : 'Days After Today' }}</label>
                             <input type="number" id="global-days" v-model="globalDays" @input="updateAllPreviews"
                                 min="0">
                         </div>
@@ -714,6 +721,7 @@
                                     style="padding: 0.4rem; font-size: 0.85rem;">
                                     <option value="inherit">Inherit Global Default</option>
                                     <option value="days">Custom Days from Today</option>
+                                    <option value="custom-date">Custom Days from Date</option>
                                     <option value="static">Custom Static Text</option>
                                 </select>
                             </div>
@@ -727,6 +735,30 @@
 
                             <!-- If Custom Days -->
                             <div class="control-group" v-if="label.mode === 'days'">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem;">
+                                    <div>
+                                        <label style="font-size: 0.75rem; color: var(--text-muted);">Prefix</label>
+                                        <input type="text" v-model="label.prefix" @input="updateSinglePreview(label)"
+                                            placeholder="EXP: " style="padding: 0.4rem; font-size: 0.85rem;">
+                                    </div>
+                                    <div>
+                                        <label style="font-size: 0.75rem; color: var(--text-muted);">Days</label>
+                                        <input type="number" v-model="label.days" @input="updateSinglePreview(label)"
+                                            min="0" style="padding: 0.4rem; font-size: 0.85rem;">
+                                    </div>
+                                </div>
+                                <div style="font-size: 0.75rem; color: var(--accent); margin-top: 0.25rem;">
+                                    Preview: {{ getLabelDisplay(label) }}
+                                </div>
+                            </div>
+
+                            <!-- If Custom Date -->
+                            <div class="control-group" v-if="label.mode === 'custom-date'">
+                                <div style="margin-bottom: 0.4rem;">
+                                    <label style="font-size: 0.75rem; color: var(--text-muted);">Base Date</label>
+                                    <input type="date" v-model="label.baseDate" @change="updateSinglePreview(label)"
+                                        style="padding: 0.4rem; font-size: 0.85rem;">
+                                </div>
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem;">
                                     <div>
                                         <label style="font-size: 0.75rem; color: var(--text-muted);">Prefix</label>
@@ -830,6 +862,7 @@
                         staticText: label.staticText,
                         days: label.days,
                         prefix: label.prefix,
+                        baseDate: label.baseDate,
                         quantity: label.quantity
                     });
                     req.onsuccess = () => resolve();
@@ -870,11 +903,12 @@
             data() {
                 return {
                     labels: [],
-                    globalMode: 'days', // 'days' or 'static'
+                    globalMode: 'days', // 'days', 'custom-date', or 'static'
                     globalText: '',
                     globalDays: 4,
                     globalPrefix: '',
                     globalDateFormat: 'MM/DD',
+                    globalBaseDate: '', // YYYY-MM-DD
                     xOffset: 35,
                     yOffset: 56,
                     fontSize: 38,
@@ -892,7 +926,8 @@
                     if (this.globalMode === 'static') {
                         return this.globalText || '(empty)';
                     }
-                    return this.calculateExpirationText(this.globalDays, this.globalPrefix, this.globalDateFormat);
+                    const baseDate = this.globalMode === 'custom-date' ? this.globalBaseDate : '';
+                    return this.calculateExpirationText(this.globalDays, this.globalPrefix, this.globalDateFormat, baseDate);
                 }
             },
             mounted() {
@@ -906,6 +941,7 @@
                         this.globalDays = parsed.globalDays !== undefined ? parsed.globalDays : 4;
                         this.globalPrefix = parsed.globalPrefix !== undefined ? parsed.globalPrefix : '';
                         this.globalDateFormat = parsed.globalDateFormat || 'MM/DD';
+                        this.globalBaseDate = parsed.globalBaseDate || '';
                         this.xOffset = parsed.xOffset !== undefined ? parsed.xOffset : 35;
                         this.yOffset = parsed.yOffset !== undefined ? parsed.yOffset : 56;
                         this.fontSize = parsed.fontSize || 38;
@@ -914,6 +950,10 @@
                     } catch (e) {
                         console.error("Failed to parse settings:", e);
                     }
+                }
+
+                if (!this.globalBaseDate) {
+                    this.globalBaseDate = this.getTodayDateString();
                 }
 
                 // Load templates from IndexedDB
@@ -930,6 +970,7 @@
                             staticText: s.staticText || s.labelText || '',
                             days: s.days !== undefined ? s.days : null,
                             prefix: s.prefix || '',
+                            baseDate: s.baseDate || '',
                             quantity: s.quantity !== undefined ? s.quantity : 1
                         }));
 
@@ -952,6 +993,7 @@
                         globalDays: Number(this.globalDays),
                         globalPrefix: this.globalPrefix,
                         globalDateFormat: this.globalDateFormat,
+                        globalBaseDate: this.globalBaseDate,
                         xOffset: Number(this.xOffset),
                         yOffset: Number(this.yOffset),
                         fontSize: Number(this.fontSize),
@@ -988,6 +1030,7 @@
                                 staticText: '',
                                 days: null,
                                 prefix: '',
+                                baseDate: '',
                                 quantity: 1
                             };
                             this.labels.push(newLabel);
@@ -1032,6 +1075,7 @@
                                 staticText: '',
                                 days: null,
                                 prefix: '',
+                                baseDate: '',
                                 quantity: 1
                             };
                             this.labels.push(newLabel);
@@ -1051,9 +1095,19 @@
                         this.isLoadingDefaults = false;
                     }
                 },
-                calculateExpirationText(daysOffset, prefix, format) {
+                calculateExpirationText(daysOffset, prefix, format, baseDateStr) {
                     const numDays = Number(daysOffset) || 0;
-                    const date = new Date();
+                    let date;
+                    if (baseDateStr) {
+                        const parts = baseDateStr.split('-');
+                        if (parts.length === 3) {
+                            date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+                        } else {
+                            date = new Date();
+                        }
+                    } else {
+                        date = new Date();
+                    }
                     date.setDate(date.getDate() + numDays);
 
                     const dd = String(date.getDate()).padStart(2, '0');
@@ -1094,13 +1148,26 @@
                         }
                         return label.staticText;
                     } else {
-                        // days mode
-                        const days = label.mode === 'inherit' ? this.globalDays : label.days;
-                        const prefix = label.mode === 'inherit' ? this.globalPrefix : label.prefix;
+                        // days or custom-date mode
+                        const isInherit = label.mode === 'inherit';
+                        const days = isInherit ? this.globalDays : label.days;
+                        const prefix = isInherit ? this.globalPrefix : label.prefix;
                         const format = this.globalDateFormat;
 
-                        return this.calculateExpirationText(days, prefix, format);
+                        let baseDate = '';
+                        if (mode === 'custom-date') {
+                            baseDate = isInherit ? this.globalBaseDate : (label.baseDate || this.getTodayDateString());
+                        }
+
+                        return this.calculateExpirationText(days, prefix, format, baseDate);
                     }
+                },
+                getTodayDateString() {
+                    const today = new Date();
+                    const yyyy = today.getFullYear();
+                    const mm = String(today.getMonth() + 1).padStart(2, '0');
+                    const dd = String(today.getDate()).padStart(2, '0');
+                    return `${yyyy}-${mm}-${dd}`;
                 },
                 getImage(id, dataUrl) {
                     return new Promise((resolve) => {
