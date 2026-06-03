@@ -784,6 +784,29 @@
                                     placeholder="e.g. EXP: 12/28" style="padding: 0.4rem; font-size: 0.85rem;">
                             </div>
 
+                            <!-- Custom Position Override -->
+                            <div class="control-group">
+                                <div class="toggle-container" style="padding: 0.5rem; margin-top: 0.25rem;">
+                                    <label style="font-size: 0.75rem; color: var(--text-muted);">Custom Position</label>
+                                    <label class="switch" style="transform: scale(0.85); transform-origin: right center;">
+                                        <input type="checkbox" v-model="label.customPosition" @change="toggleCustomPosition(label)">
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="control-group" v-if="label.customPosition" style="margin-top: 0.25rem;">
+                                <div class="offset-sliders" style="grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                                    <div>
+                                        <span style="font-size: 0.7rem; color: var(--text-muted);">X: {{ label.xOffset }}px</span>
+                                        <input type="range" v-model="label.xOffset" min="-300" max="300" @input="updateSinglePreview(label)" style="width: 100%;">
+                                    </div>
+                                    <div>
+                                        <span style="font-size: 0.7rem; color: var(--text-muted);">Y: {{ label.yOffset }}px</span>
+                                        <input type="range" v-model="label.yOffset" min="-300" max="300" @input="updateSinglePreview(label)" style="width: 100%;">
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Print Quantity -->
                             <div class="control-group">
                                 <label style="font-size: 0.75rem; color: var(--text-muted);">Print Quantity</label>
@@ -863,6 +886,9 @@
                         days: label.days,
                         prefix: label.prefix,
                         baseDate: label.baseDate,
+                        customPosition: label.customPosition,
+                        xOffset: label.xOffset,
+                        yOffset: label.yOffset,
                         quantity: label.quantity
                     });
                     req.onsuccess = () => resolve();
@@ -971,6 +997,9 @@
                             days: s.days !== undefined ? s.days : null,
                             prefix: s.prefix || '',
                             baseDate: s.baseDate || '',
+                            customPosition: s.customPosition || false,
+                            xOffset: s.xOffset !== undefined && s.xOffset !== null ? s.xOffset : null,
+                            yOffset: s.yOffset !== undefined && s.yOffset !== null ? s.yOffset : null,
                             quantity: s.quantity !== undefined ? s.quantity : 1
                         }));
 
@@ -1031,6 +1060,9 @@
                                 days: null,
                                 prefix: '',
                                 baseDate: '',
+                                customPosition: false,
+                                xOffset: null,
+                                yOffset: null,
                                 quantity: 1
                             };
                             this.labels.push(newLabel);
@@ -1076,6 +1108,9 @@
                                 days: null,
                                 prefix: '',
                                 baseDate: '',
+                                customPosition: false,
+                                xOffset: null,
+                                yOffset: null,
                                 quantity: 1
                             };
                             this.labels.push(newLabel);
@@ -1203,8 +1238,10 @@
                         ctx.textAlign = 'center';
                         ctx.textBaseline = 'middle';
 
-                        const x = canvas.width / 2 + Number(this.xOffset);
-                        const y = canvas.height / 2 + Number(this.yOffset);
+                        const xOff = label.customPosition && label.xOffset !== null ? label.xOffset : this.xOffset;
+                        const yOff = label.customPosition && label.yOffset !== null ? label.yOffset : this.yOffset;
+                        const x = canvas.width / 2 + Number(xOff);
+                        const y = canvas.height / 2 + Number(yOff);
                         ctx.fillText(txt, x, y);
                     }
                 },
@@ -1214,6 +1251,17 @@
                     if (canvas) {
                         this.renderLabelToCanvas(label, canvas);
                     }
+                },
+                toggleCustomPosition(label) {
+                    if (label.customPosition) {
+                        if (label.xOffset === null || label.xOffset === undefined) {
+                            label.xOffset = this.xOffset;
+                        }
+                        if (label.yOffset === null || label.yOffset === undefined) {
+                            label.yOffset = this.yOffset;
+                        }
+                    }
+                    this.updateSinglePreview(label);
                 },
                 updateAllPreviews() {
                     this.saveSettings();
