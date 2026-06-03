@@ -638,6 +638,24 @@
                 </div>
 
                 <div class="control-group">
+                    <div class="section-title">Default Template Scale & Pan</div>
+                    <label>Default Label Zoom: {{ Math.round(globalZoom * 100) }}%</label>
+                    <input type="range" v-model.number="globalZoom" min="0.5" max="2.5" step="0.01" @input="updateAllPreviews" style="width: 100%;">
+                    
+                    <label style="margin-top: 0.5rem;">Default Label Pan Offset</label>
+                    <div class="offset-sliders">
+                        <div>
+                            <span style="font-size: 0.75rem; color: var(--text-muted);">X: {{ globalPanX }}px</span>
+                            <input type="range" v-model.number="globalPanX" min="-300" max="300" @input="updateAllPreviews">
+                        </div>
+                        <div>
+                            <span style="font-size: 0.75rem; color: var(--text-muted);">Y: {{ globalPanY }}px</span>
+                            <input type="range" v-model.number="globalPanY" min="-300" max="300" @input="updateAllPreviews">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-group">
                     <label for="font-size">Font Size (px)</label>
                     <input type="number" id="font-size" v-model="fontSize" min="8" max="200" @input="updateAllPreviews">
                 </div>
@@ -662,8 +680,11 @@
                     </div>
                 </div>
 
-                <!-- Reset Database -->
-                <div class="control-group" style="margin-top: auto;" v-if="labels.length > 0">
+                <!-- Reset Database & Settings -->
+                <div class="control-group" style="margin-top: auto; display: flex; flex-direction: column; gap: 0.5rem;" v-if="labels.length > 0">
+                    <button class="btn btn-secondary" @click="resetSettingsToDefault">
+                        ⚙️ Reset Global Settings
+                    </button>
                     <button class="btn btn-secondary btn-danger" @click="clearAllTemplates">
                         🗑️ Clear Saved Templates
                     </button>
@@ -807,6 +828,38 @@
                                 </div>
                             </div>
 
+                            <!-- Custom Scale & Pan Toggle -->
+                            <div class="control-group">
+                                <div class="toggle-container" style="padding: 0.5rem; margin-top: 0.25rem;">
+                                    <label style="font-size: 0.75rem; color: var(--text-muted);">Custom Scale & Pan</label>
+                                    <label class="switch" style="transform: scale(0.85); transform-origin: right center;">
+                                        <input type="checkbox" v-model="label.customTransform" @change="toggleCustomTransform(label)">
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Label Zoom -->
+                            <div class="control-group" v-if="label.customTransform">
+                                <span style="font-size: 0.75rem; color: var(--text-muted);">Label Zoom: {{ Math.round((label.zoom || 1.0) * 100) }}%</span>
+                                <input type="range" v-model.number="label.zoom" min="0.5" max="2.5" step="0.01" @input="updateSinglePreview(label)" style="width: 100%;">
+                            </div>
+
+                            <!-- Label Pan -->
+                            <div class="control-group" v-if="label.customTransform" style="margin-top: 0.25rem;">
+                                <label style="font-size: 0.75rem; color: var(--text-muted);">Label Pan Offset</label>
+                                <div class="offset-sliders" style="grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                                    <div>
+                                        <span style="font-size: 0.7rem; color: var(--text-muted);">X: {{ label.panX || 0 }}px</span>
+                                        <input type="range" v-model.number="label.panX" min="-300" max="300" @input="updateSinglePreview(label)" style="width: 100%;">
+                                    </div>
+                                    <div>
+                                        <span style="font-size: 0.7rem; color: var(--text-muted);">Y: {{ label.panY || 0 }}px</span>
+                                        <input type="range" v-model.number="label.panY" min="-300" max="300" @input="updateSinglePreview(label)" style="width: 100%;">
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Print Quantity -->
                             <div class="control-group">
                                 <label style="font-size: 0.75rem; color: var(--text-muted);">Print Quantity</label>
@@ -889,7 +942,11 @@
                         customPosition: label.customPosition,
                         xOffset: label.xOffset,
                         yOffset: label.yOffset,
-                        quantity: label.quantity
+                        quantity: label.quantity,
+                        zoom: label.zoom !== undefined ? label.zoom : null,
+                        panX: label.panX !== undefined ? label.panX : null,
+                        panY: label.panY !== undefined ? label.panY : null,
+                        customTransform: label.customTransform !== undefined ? label.customTransform : false
                     });
                     req.onsuccess = () => resolve();
                     req.onerror = () => reject(req.error);
@@ -944,7 +1001,10 @@
                     canvasRefs: {},
                     printUrls: [],
                     imagesCache: {}, // Cache HTMLImageElements to speed up renders
-                    isLoadingDefaults: false
+                    isLoadingDefaults: false,
+                    globalZoom: 0.97,
+                    globalPanX: 2,
+                    globalPanY: -8
                 }
             },
             computed: {
@@ -973,6 +1033,9 @@
                         this.fontSize = parsed.fontSize || 38;
                         this.textColor = parsed.textColor || '#000000';
                         this.showCircleGuide = parsed.showCircleGuide !== undefined ? parsed.showCircleGuide : false;
+                        this.globalZoom = parsed.globalZoom !== undefined ? parsed.globalZoom : 0.97;
+                        this.globalPanX = parsed.globalPanX !== undefined ? parsed.globalPanX : 2;
+                        this.globalPanY = parsed.globalPanY !== undefined ? parsed.globalPanY : -8;
                     } catch (e) {
                         console.error("Failed to parse settings:", e);
                     }
@@ -1000,7 +1063,11 @@
                             customPosition: s.customPosition || false,
                             xOffset: s.xOffset !== undefined && s.xOffset !== null ? s.xOffset : null,
                             yOffset: s.yOffset !== undefined && s.yOffset !== null ? s.yOffset : null,
-                            quantity: s.quantity !== undefined ? s.quantity : 1
+                            quantity: s.quantity !== undefined ? s.quantity : 1,
+                            zoom: s.zoom !== undefined && s.zoom !== null ? s.zoom : null,
+                            panX: s.panX !== undefined && s.panX !== null ? s.panX : null,
+                            panY: s.panY !== undefined && s.panY !== null ? s.panY : null,
+                            customTransform: s.customTransform || false
                         }));
 
                         this.$nextTick(() => {
@@ -1027,7 +1094,10 @@
                         yOffset: Number(this.yOffset),
                         fontSize: Number(this.fontSize),
                         textColor: this.textColor,
-                        showCircleGuide: this.showCircleGuide
+                        showCircleGuide: this.showCircleGuide,
+                        globalZoom: Number(this.globalZoom),
+                        globalPanX: Number(this.globalPanX),
+                        globalPanY: Number(this.globalPanY)
                     };
                     localStorage.setItem('juicesee_settings', JSON.stringify(settings));
                 },
@@ -1063,7 +1133,11 @@
                                 customPosition: false,
                                 xOffset: null,
                                 yOffset: null,
-                                quantity: 1
+                                quantity: 1,
+                                zoom: null,
+                                panX: null,
+                                panY: null,
+                                customTransform: false
                             };
                             this.labels.push(newLabel);
                             loadedCount++;
@@ -1111,7 +1185,11 @@
                                 customPosition: false,
                                 xOffset: null,
                                 yOffset: null,
-                                quantity: 1
+                                quantity: 1,
+                                zoom: null,
+                                panX: null,
+                                panY: null,
+                                customTransform: false
                             };
                             this.labels.push(newLabel);
                         }
@@ -1228,7 +1306,20 @@
 
                     const ctx = canvas.getContext('2d');
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    ctx.drawImage(img, 0, 0);
+                    
+                    // Draw a solid white background (ensures white margins when zoomed out)
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    const useZoom = label.customTransform && label.zoom !== undefined && label.zoom !== null ? Number(label.zoom) : this.globalZoom;
+                    const usePanX = label.customTransform && label.panX !== undefined && label.panX !== null ? Number(label.panX) : this.globalPanX;
+                    const usePanY = label.customTransform && label.panY !== undefined && label.panY !== null ? Number(label.panY) : this.globalPanY;
+                    
+                    const w = img.width * useZoom;
+                    const h = img.height * useZoom;
+                    const x = (canvas.width - w) / 2 + usePanX;
+                    const y = (canvas.height - h) / 2 + usePanY;
+                    ctx.drawImage(img, x, y, w, h);
 
                     // Add text
                     const txt = this.getLabelDisplay(label).trim();
@@ -1263,6 +1354,20 @@
                     }
                     this.updateSinglePreview(label);
                 },
+                toggleCustomTransform(label) {
+                    if (label.customTransform) {
+                        if (label.zoom === null || label.zoom === undefined) {
+                            label.zoom = this.globalZoom;
+                        }
+                        if (label.panX === null || label.panX === undefined) {
+                            label.panX = this.globalPanX;
+                        }
+                        if (label.panY === null || label.panY === undefined) {
+                            label.panY = this.globalPanY;
+                        }
+                    }
+                    this.updateSinglePreview(label);
+                },
                 updateAllPreviews() {
                     this.saveSettings();
                     this.labels.forEach(label => {
@@ -1290,6 +1395,26 @@
                         this.imagesCache = {};
                         this.canvasRefs = {};
                         await saveLabelsToIDB([]);
+                    }
+                },
+                resetSettingsToDefault() {
+                    if (confirm("Are you sure you want to reset all global settings back to default values?")) {
+                        this.globalMode = 'days';
+                        this.globalText = '';
+                        this.globalDays = 4;
+                        this.globalPrefix = '';
+                        this.globalDateFormat = 'MM/DD';
+                        this.globalBaseDate = this.getTodayDateString();
+                        this.xOffset = 35;
+                        this.yOffset = 56;
+                        this.fontSize = 38;
+                        this.textColor = '#000000';
+                        this.showCircleGuide = false;
+                        this.globalZoom = 0.97;
+                        this.globalPanX = 2;
+                        this.globalPanY = -8;
+                        this.saveSettings();
+                        this.updateAllPreviews();
                     }
                 },
                 // Trigger print dialog for a single label
