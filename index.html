@@ -752,6 +752,13 @@
                                     placeholder="e.g. EXP: 12/28" style="padding: 0.4rem; font-size: 0.85rem;">
                             </div>
 
+                            <!-- Print Quantity -->
+                            <div class="control-group">
+                                <label style="font-size: 0.75rem; color: var(--text-muted);">Print Quantity</label>
+                                <input type="number" v-model="label.quantity" @change="persistLabels"
+                                    min="1" style="padding: 0.4rem; font-size: 0.85rem;" placeholder="1">
+                            </div>
+
                             <div class="card-actions">
                                 <button class="btn btn-secondary" style="padding: 0.5rem;"
                                     @click="printSingleLabel(label)" title="Print to Munbyn">
@@ -822,7 +829,8 @@
                         mode: label.mode,
                         staticText: label.staticText,
                         days: label.days,
-                        prefix: label.prefix
+                        prefix: label.prefix,
+                        quantity: label.quantity
                     });
                     req.onsuccess = () => resolve();
                     req.onerror = () => reject(req.error);
@@ -921,7 +929,8 @@
                             mode: s.mode || (s.labelText ? 'static' : 'inherit'),
                             staticText: s.staticText || s.labelText || '',
                             days: s.days !== undefined ? s.days : null,
-                            prefix: s.prefix || ''
+                            prefix: s.prefix || '',
+                            quantity: s.quantity !== undefined ? s.quantity : 1
                         }));
 
                         this.$nextTick(() => {
@@ -978,7 +987,8 @@
                                 mode: 'inherit',
                                 staticText: '',
                                 days: null,
-                                prefix: ''
+                                prefix: '',
+                                quantity: 1
                             };
                             this.labels.push(newLabel);
                             loadedCount++;
@@ -1021,7 +1031,8 @@
                                 mode: 'inherit',
                                 staticText: '',
                                 days: null,
-                                prefix: ''
+                                prefix: '',
+                                quantity: 1
                             };
                             this.labels.push(newLabel);
                         }
@@ -1171,8 +1182,13 @@
                     const canvas = this.canvasRefs[label.id];
                     if (!canvas) return;
 
-                    // Render single item to print state
-                    this.printUrls = [canvas.toDataURL('image/png')];
+                    const dataUrl = canvas.toDataURL('image/png');
+                    const qty = Number(label.quantity) || 1;
+                    const urls = [];
+                    for (let i = 0; i < qty; i++) {
+                        urls.push(dataUrl);
+                    }
+                    this.printUrls = urls;
 
                     this.$nextTick(() => {
                         window.print();
@@ -1184,7 +1200,11 @@
                     for (const label of this.labels) {
                         const canvas = this.canvasRefs[label.id];
                         if (canvas) {
-                            urls.push(canvas.toDataURL('image/png'));
+                            const dataUrl = canvas.toDataURL('image/png');
+                            const qty = Number(label.quantity) || 1;
+                            for (let i = 0; i < qty; i++) {
+                                urls.push(dataUrl);
+                            }
                         }
                     }
                     this.printUrls = urls;
