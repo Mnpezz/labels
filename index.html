@@ -713,8 +713,11 @@
                         </div>
                         <div>
                             <label for="global-days">{{ globalMode === 'custom-date' ? 'Days After Date' : 'Days After Today' }}</label>
-                            <input type="number" id="global-days" v-model="globalDays" @input="updateAllPreviews"
-                                min="0">
+                            <div class="stepper-control">
+                                <button type="button" class="stepper-btn" @click="adjustValue('global', 'globalDays', -1, 0)">-</button>
+                                <input type="number" id="global-days" class="stepper-input" v-model.number="globalDays" @input="updateAllPreviews" min="0">
+                                <button type="button" class="stepper-btn" @click="adjustValue('global', 'globalDays', 1, 0)">+</button>
+                            </div>
                         </div>
                     </div>
                     <div style="margin-top: 0.5rem;">
@@ -792,7 +795,11 @@
 
                 <div class="control-group">
                     <label for="font-size">Font Size (px)</label>
-                    <input type="number" id="font-size" v-model="fontSize" min="8" max="200" @input="updateAllPreviews">
+                    <div class="stepper-control">
+                        <button type="button" class="stepper-btn" @click="adjustValue('global', 'fontSize', -1, 8, 200)">-</button>
+                        <input type="number" id="font-size" class="stepper-input" v-model.number="fontSize" min="8" max="200" @input="updateAllPreviews">
+                        <button type="button" class="stepper-btn" @click="adjustValue('global', 'fontSize', 1, 8, 200)">+</button>
+                    </div>
                 </div>
 
                 <div class="control-group">
@@ -922,8 +929,11 @@
                                     </div>
                                     <div>
                                         <label style="font-size: 0.75rem; color: var(--text-muted);">Days</label>
-                                        <input type="number" v-model="label.days" @input="updateSinglePreview(label)"
-                                            min="0" style="padding: 0.4rem; font-size: 0.85rem;">
+                                        <div class="stepper-control">
+                                            <button type="button" class="stepper-btn" @click="adjustValue(label, 'days', -1, 0)">-</button>
+                                            <input type="number" class="stepper-input" v-model.number="label.days" @input="updateSinglePreview(label)" min="0">
+                                            <button type="button" class="stepper-btn" @click="adjustValue(label, 'days', 1, 0)">+</button>
+                                        </div>
                                     </div>
                                 </div>
                                 <div style="font-size: 0.75rem; color: var(--accent); margin-top: 0.25rem;">
@@ -946,8 +956,11 @@
                                     </div>
                                     <div>
                                         <label style="font-size: 0.75rem; color: var(--text-muted);">Days</label>
-                                        <input type="number" v-model="label.days" @input="updateSinglePreview(label)"
-                                            min="0" style="padding: 0.4rem; font-size: 0.85rem;">
+                                        <div class="stepper-control">
+                                            <button type="button" class="stepper-btn" @click="adjustValue(label, 'days', -1, 0)">-</button>
+                                            <input type="number" class="stepper-input" v-model.number="label.days" @input="updateSinglePreview(label)" min="0">
+                                            <button type="button" class="stepper-btn" @click="adjustValue(label, 'days', 1, 0)">+</button>
+                                        </div>
                                     </div>
                                 </div>
                                 <div style="font-size: 0.75rem; color: var(--accent); margin-top: 0.25rem;">
@@ -995,6 +1008,11 @@
                                         </div>
                                         <input type="range" v-model.number="label.yOffset" min="-300" max="300" @input="updateSinglePreview(label)">
                                     </div>
+                                </div>
+                                <div style="margin-top: 0.4rem; text-align: right;">
+                                    <button type="button" class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.2rem 0.5rem;" @click="resetCustomPosition(label)">
+                                        Reset to Global
+                                    </button>
                                 </div>
                             </div>
 
@@ -1046,13 +1064,21 @@
                                         <input type="range" v-model.number="label.panY" min="-300" max="300" @input="updateSinglePreview(label)">
                                     </div>
                                 </div>
+                                <div style="margin-top: 0.4rem; text-align: right;">
+                                    <button type="button" class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.2rem 0.5rem;" @click="resetCustomTransform(label)">
+                                        Reset to Global
+                                    </button>
+                                </div>
                             </div>
 
                             <!-- Print Quantity -->
                             <div class="control-group">
                                 <label style="font-size: 0.75rem; color: var(--text-muted);">Print Quantity</label>
-                                <input type="number" v-model="label.quantity" @change="persistLabels" min="1"
-                                    style="padding: 0.4rem; font-size: 0.85rem;" placeholder="1">
+                                <div class="stepper-control">
+                                    <button type="button" class="stepper-btn" @click="adjustValue(label, 'quantity', -1, 1)">-</button>
+                                    <input type="number" class="stepper-input" v-model.number="label.quantity" @change="persistLabels" min="1" placeholder="1">
+                                    <button type="button" class="stepper-btn" @click="adjustValue(label, 'quantity', 1, 1)">+</button>
+                                </div>
                             </div>
 
                             <div class="card-actions">
@@ -1574,6 +1600,17 @@
                             label.panY = this.globalPanY;
                         }
                     }
+                    this.updateSinglePreview(label);
+                },
+                resetCustomPosition(label) {
+                    label.xOffset = this.xOffset;
+                    label.yOffset = this.yOffset;
+                    this.updateSinglePreview(label);
+                },
+                resetCustomTransform(label) {
+                    label.zoom = this.globalZoom;
+                    label.panX = this.globalPanX;
+                    label.panY = this.globalPanY;
                     this.updateSinglePreview(label);
                 },
                 updateAllPreviews() {
