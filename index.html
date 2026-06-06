@@ -1434,17 +1434,20 @@
                         }
                     });
                 },
-                removeLabel(index) {
-                    const label = this.labels[index];
-                    if (label) {
-                        delete this.imagesCache[label.id];
-                        delete this.canvasRefs[label.id];
+                removeLabel(id) {
+                    const index = this.labels.findIndex(l => l.id === id);
+                    if (index !== -1) {
+                        const label = this.labels[index];
+                        if (label) {
+                            delete this.imagesCache[label.id];
+                            delete this.canvasRefs[label.id];
+                        }
+                        this.labels.splice(index, 1);
+                        this.persistLabels();
+                        this.$nextTick(() => {
+                            this.updateAllPreviews();
+                        });
                     }
-                    this.labels.splice(index, 1);
-                    this.persistLabels();
-                    this.$nextTick(() => {
-                        this.updateAllPreviews();
-                    });
                 },
                 async clearAllTemplates() {
                     if (confirm("Are you sure you want to delete all stored templates? This cannot be undone.")) {
