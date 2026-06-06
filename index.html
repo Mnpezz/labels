@@ -893,7 +893,7 @@
                                  @touchstart="startPan($event, label)"
                                  @wheel.prevent="handleWheel($event, label)"
                                  :title="label.customTransform ? 'Drag to Pan / Scroll to Zoom' : ''">
-                                <canvas :ref="el => { if (el) canvasRefs[label.id] = el }" class="preview-canvas"></canvas>
+                                <canvas :ref="el => { if (el) { canvasRefs[label.id] = el; renderLabelToCanvas(label, el); } }" class="preview-canvas"></canvas>
                                 <div class="circle-guide" v-if="showCircleGuide"></div>
                             </div>
 
