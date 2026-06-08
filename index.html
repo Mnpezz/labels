@@ -99,6 +99,7 @@
             display: flex;
             flex-direction: column;
             gap: 1.5rem;
+            min-height: 0;
         }
 
         .section-title {
@@ -649,6 +650,65 @@
             background: var(--primary-hover);
             transform: scale(1.15);
         }
+
+        /* Collapsible Global Settings panel */
+        .collapsible-panel {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            overflow: visible;
+            transition: border-color 0.2s;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .collapsible-panel:hover {
+            border-color: var(--primary);
+        }
+
+        .collapsible-header {
+            padding: 1rem 1.25rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            background-color: rgba(30, 41, 59, 0.4);
+            user-select: none;
+            transition: background-color 0.2s;
+        }
+
+        .collapsible-header:hover {
+            background-color: rgba(30, 41, 59, 0.6);
+        }
+
+        .collapsible-header h3 {
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .collapsible-chevron {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            transition: transform 0.3s ease;
+        }
+
+        .collapsible-chevron.open {
+            transform: rotate(180deg);
+        }
+
+        .collapsible-content {
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            border-top: 1px solid var(--border);
+        }
     </style>
 </head>
 
@@ -684,184 +744,219 @@
                     </button>
                 </div>
 
-                <!-- Global settings -->
-                <div class="control-group">
-                    <div class="section-title">Global Settings</div>
-
-                    <label for="global-mode">Default Expiration Mode</label>
-                    <select id="global-mode" v-model="globalMode" @change="updateAllPreviews">
-                        <option value="days">Days from Today (Automatic)</option>
-                        <option value="custom-date">Days from Custom Date</option>
-                        <option value="static">Static Text</option>
-                    </select>
-                </div>
-
-                <div class="control-group" v-if="globalMode === 'static'">
-                    <label for="global-text">Default Expiration Text</label>
-                    <input type="text" id="global-text" v-model="globalText" @input="updateAllPreviews"
-                        placeholder="e.g. EXP: 12/28">
-                </div>
-
-                <div class="control-group" v-else>
-                    <div v-if="globalMode === 'custom-date'" style="margin-bottom: 0.5rem;">
-                        <label for="global-base-date">Base Date</label>
-                        <input type="date" id="global-base-date" v-model="globalBaseDate" @change="updateAllPreviews">
+                <!-- Collapsible Global Settings Panel -->
+                <div class="collapsible-panel">
+                    <div class="collapsible-header" @click="globalSettingsExpanded = !globalSettingsExpanded">
+                        <h3>⚙️ Global Configuration</h3>
+                        <span class="collapsible-chevron" :class="{ open: globalSettingsExpanded }">▼</span>
                     </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
-                        <div>
-                            <label for="global-prefix">Prefix</label>
-                            <input type="text" id="global-prefix" v-model="globalPrefix" @input="updateAllPreviews"
-                                placeholder="e.g. EXP: ">
+                    <div class="collapsible-content" v-show="globalSettingsExpanded">
+                        <!-- Global settings -->
+                        <div class="control-group">
+                            <div class="section-title">Global Settings</div>
+
+                            <label for="global-mode">Default Expiration Mode</label>
+                            <select id="global-mode" v-model="globalMode" @change="updateAllPreviews">
+                                <option value="days">Days from Today (Automatic)</option>
+                                <option value="custom-date">Days from Custom Date</option>
+                                <option value="static">Static Text</option>
+                            </select>
                         </div>
-                        <div>
-                            <label for="global-days">
-                                <span v-if="globalMode === 'custom-date'">Days After Date</span>
-                                <span v-else>Days After Today</span>
-                            </label>
+
+                        <div class="control-group" v-if="globalMode === 'static'">
+                            <label for="global-text">Default Expiration Text</label>
+                            <input type="text" id="global-text" v-model="globalText" @input="updateAllPreviews"
+                                placeholder="e.g. EXP: 12/28">
+                        </div>
+
+                        <div class="control-group" v-else>
+                            <div v-if="globalMode === 'custom-date'" style="margin-bottom: 0.5rem;">
+                                <label for="global-base-date">Base Date</label>
+                                <input type="date" id="global-base-date" v-model="globalBaseDate"
+                                    @change="updateAllPreviews">
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                                <div>
+                                    <label for="global-prefix">Prefix</label>
+                                    <input type="text" id="global-prefix" v-model="globalPrefix"
+                                        @input="updateAllPreviews" placeholder="e.g. EXP: ">
+                                </div>
+                                <div>
+                                    <label for="global-days">
+                                        <span v-if="globalMode === 'custom-date'">Days After Date</span>
+                                        <span v-else>Days After Today</span>
+                                    </label>
+                                    <div class="stepper-control">
+                                        <button type="button" class="stepper-btn"
+                                            @click="adjustValue('global', 'globalDays', -1, 0)">-</button>
+                                        <input type="number" id="global-days" class="stepper-input"
+                                            v-model.number="globalDays" @input="updateAllPreviews" min="0">
+                                        <button type="button" class="stepper-btn"
+                                            @click="adjustValue('global', 'globalDays', 1, 0)">+</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="margin-top: 0.5rem;">
+                                <label for="global-date-format">Date Format</label>
+                                <select id="global-date-format" v-model="globalDateFormat" @change="updateAllPreviews">
+                                    <option value="MM/DD">MM/DD (e.g. 12/28)</option>
+                                    <option value="MM/DD/YY">MM/DD/YY (e.g. 12/28/26)</option>
+                                    <option value="M/D">M/D (e.g. 12/28)</option>
+                                    <option value="Month DD">MMM DD (e.g. Dec 28)</option>
+                                    <option value="MonthLong DD">MMMM DD (e.g. December 28)</option>
+                                </select>
+                            </div>
+                            <div style="font-size: 0.85rem; color: var(--accent); margin-top: 0.25rem;">
+                                Computed preview: <strong>{{ calculatedGlobalPreview }}</strong>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <div class="section-title">Formatting & Placement</div>
+                            <label>Position Offset</label>
+                            <div class="offset-sliders">
+                                <div>
+                                    <span style="font-size: 0.75rem; color: var(--text-muted);">X Offset (px)</span>
+                                    <div class="stepper-control" style="margin-bottom: 0.4rem;">
+                                        <button type="button" class="stepper-btn"
+                                            @click="adjustValue('global', 'xOffset', -1, -300, 300)">-</button>
+                                        <input type="number" class="stepper-input" v-model.number="xOffset"
+                                            @input="updateAllPreviews" min="-300" max="300">
+                                        <button type="button" class="stepper-btn"
+                                            @click="adjustValue('global', 'xOffset', 1, -300, 300)">+</button>
+                                    </div>
+                                    <input type="range" v-model.number="xOffset" min="-300" max="300"
+                                        @input="updateAllPreviews">
+                                </div>
+                                <div>
+                                    <span style="font-size: 0.75rem; color: var(--text-muted);">Y Offset (px)</span>
+                                    <div class="stepper-control" style="margin-bottom: 0.4rem;">
+                                        <button type="button" class="stepper-btn"
+                                            @click="adjustValue('global', 'yOffset', -1, -300, 300)">-</button>
+                                        <input type="number" class="stepper-input" v-model.number="yOffset"
+                                            @input="updateAllPreviews" min="-300" max="300">
+                                        <button type="button" class="stepper-btn"
+                                            @click="adjustValue('global', 'yOffset', 1, -300, 300)">+</button>
+                                    </div>
+                                    <input type="range" v-model.number="yOffset" min="-300" max="300"
+                                        @input="updateAllPreviews">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <div class="section-title">Default Template Scale & Pan</div>
+                            <label>Default Label Zoom</label>
+                            <div class="stepper-control" style="margin-bottom: 0.4rem;">
+                                <button type="button" class="stepper-btn"
+                                    @click="adjustValue('global', 'globalZoom', -0.01, 0.5, 2.5, true)">-</button>
+                                <input type="number" class="stepper-input" v-model.number="globalZoom"
+                                    @input="updateAllPreviews" min="0.5" max="2.5" step="0.01">
+                                <button type="button" class="stepper-btn"
+                                    @click="adjustValue('global', 'globalZoom', 0.01, 0.5, 2.5, true)">+</button>
+                            </div>
+                            <input type="range" v-model.number="globalZoom" min="0.5" max="2.5" step="0.01"
+                                @input="updateAllPreviews">
+
+                            <label style="margin-top: 0.5rem;">Default Label Pan Offset</label>
+                            <div class="offset-sliders">
+                                <div>
+                                    <span style="font-size: 0.75rem; color: var(--text-muted);">Pan X (px)</span>
+                                    <div class="stepper-control" style="margin-bottom: 0.4rem;">
+                                        <button type="button" class="stepper-btn"
+                                            @click="adjustValue('global', 'globalPanX', -1, -300, 300)">-</button>
+                                        <input type="number" class="stepper-input" v-model.number="globalPanX"
+                                            @input="updateAllPreviews" min="-300" max="300">
+                                        <button type="button" class="stepper-btn"
+                                            @click="adjustValue('global', 'globalPanX', 1, -300, 300)">+</button>
+                                    </div>
+                                    <input type="range" v-model.number="globalPanX" min="-300" max="300"
+                                        @input="updateAllPreviews">
+                                </div>
+                                <div>
+                                    <span style="font-size: 0.75rem; color: var(--text-muted);">Pan Y (px)</span>
+                                    <div class="stepper-control" style="margin-bottom: 0.4rem;">
+                                        <button type="button" class="stepper-btn"
+                                            @click="adjustValue('global', 'globalPanY', -1, -300, 300)">-</button>
+                                        <input type="number" class="stepper-input" v-model.number="globalPanY"
+                                            @input="updateAllPreviews" min="-300" max="300">
+                                        <button type="button" class="stepper-btn"
+                                            @click="adjustValue('global', 'globalPanY', 1, -300, 300)">+</button>
+                                    </div>
+                                    <input type="range" v-model.number="globalPanY" min="-300" max="300"
+                                        @input="updateAllPreviews">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <label for="font-size">Font Size (px)</label>
                             <div class="stepper-control">
                                 <button type="button" class="stepper-btn"
-                                    @click="adjustValue('global', 'globalDays', -1, 0)">-</button>
-                                <input type="number" id="global-days" class="stepper-input" v-model.number="globalDays"
-                                    @input="updateAllPreviews" min="0">
+                                    @click="adjustValue('global', 'fontSize', -1, 8, 200)">-</button>
+                                <input type="number" id="font-size" class="stepper-input" v-model.number="fontSize"
+                                    min="8" max="200" @input="updateAllPreviews">
                                 <button type="button" class="stepper-btn"
-                                    @click="adjustValue('global', 'globalDays', 1, 0)">+</button>
+                                    @click="adjustValue('global', 'fontSize', 1, 8, 200)">+</button>
                             </div>
                         </div>
-                    </div>
-                    <div style="margin-top: 0.5rem;">
-                        <label for="global-date-format">Date Format</label>
-                        <select id="global-date-format" v-model="globalDateFormat" @change="updateAllPreviews">
-                            <option value="MM/DD">MM/DD (e.g. 12/28)</option>
-                            <option value="MM/DD/YY">MM/DD/YY (e.g. 12/28/26)</option>
-                            <option value="M/D">M/D (e.g. 12/28)</option>
-                            <option value="Month DD">MMM DD (e.g. Dec 28)</option>
-                            <option value="MonthLong DD">MMMM DD (e.g. December 28)</option>
-                        </select>
-                    </div>
-                    <div style="font-size: 0.85rem; color: var(--accent); margin-top: 0.25rem;">
-                        Computed preview: <strong>{{ calculatedGlobalPreview }}</strong>
-                    </div>
-                </div>
 
-                <div class="control-group">
-                    <div class="section-title">Formatting & Placement</div>
-                    <label>Position Offset</label>
-                    <div class="offset-sliders">
-                        <div>
-                            <span style="font-size: 0.75rem; color: var(--text-muted);">X Offset (px)</span>
-                            <div class="stepper-control" style="margin-bottom: 0.4rem;">
-                                <button type="button" class="stepper-btn"
-                                    @click="adjustValue('global', 'xOffset', -1, -300, 300)">-</button>
-                                <input type="number" class="stepper-input" v-model.number="xOffset"
-                                    @input="updateAllPreviews" min="-300" max="300">
-                                <button type="button" class="stepper-btn"
-                                    @click="adjustValue('global', 'xOffset', 1, -300, 300)">+</button>
+                        <div class="control-group">
+                            <label>Text Color</label>
+                            <div class="color-picker-container">
+                                <input type="color" v-model="textColor" @input="updateAllPreviews">
+                                <span style="font-family: monospace; font-size: 0.9rem;">{{ textColor.toUpperCase()
+                                    }}</span>
                             </div>
-                            <input type="range" v-model.number="xOffset" min="-300" max="300"
-                                @input="updateAllPreviews">
                         </div>
-                        <div>
-                            <span style="font-size: 0.75rem; color: var(--text-muted);">Y Offset (px)</span>
-                            <div class="stepper-control" style="margin-bottom: 0.4rem;">
-                                <button type="button" class="stepper-btn"
-                                    @click="adjustValue('global', 'yOffset', -1, -300, 300)">-</button>
-                                <input type="number" class="stepper-input" v-model.number="yOffset"
-                                    @input="updateAllPreviews" min="-300" max="300">
-                                <button type="button" class="stepper-btn"
-                                    @click="adjustValue('global', 'yOffset', 1, -300, 300)">+</button>
-                            </div>
-                            <input type="range" v-model.number="yOffset" min="-300" max="300"
-                                @input="updateAllPreviews">
-                        </div>
-                    </div>
-                </div>
 
-                <div class="control-group">
-                    <div class="section-title">Default Template Scale & Pan</div>
-                    <label>Default Label Zoom</label>
-                    <div class="stepper-control" style="margin-bottom: 0.4rem;">
-                        <button type="button" class="stepper-btn"
-                            @click="adjustValue('global', 'globalZoom', -0.01, 0.5, 2.5, true)">-</button>
-                        <input type="number" class="stepper-input" v-model.number="globalZoom"
-                            @input="updateAllPreviews" min="0.5" max="2.5" step="0.01">
-                        <button type="button" class="stepper-btn"
-                            @click="adjustValue('global', 'globalZoom', 0.01, 0.5, 2.5, true)">+</button>
-                    </div>
-                    <input type="range" v-model.number="globalZoom" min="0.5" max="2.5" step="0.01"
-                        @input="updateAllPreviews">
-
-                    <label style="margin-top: 0.5rem;">Default Label Pan Offset</label>
-                    <div class="offset-sliders">
-                        <div>
-                            <span style="font-size: 0.75rem; color: var(--text-muted);">Pan X (px)</span>
-                            <div class="stepper-control" style="margin-bottom: 0.4rem;">
-                                <button type="button" class="stepper-btn"
-                                    @click="adjustValue('global', 'globalPanX', -1, -300, 300)">-</button>
-                                <input type="number" class="stepper-input" v-model.number="globalPanX"
-                                    @input="updateAllPreviews" min="-300" max="300">
-                                <button type="button" class="stepper-btn"
-                                    @click="adjustValue('global', 'globalPanX', 1, -300, 300)">+</button>
+                        <!-- Previews toggles -->
+                        <div class="control-group">
+                            <div class="section-title">Display Options</div>
+                            <div class="toggle-container">
+                                <label>Show 2" Circle Guide</label>
+                                <label class="switch">
+                                    <input type="checkbox" v-model="showCircleGuide">
+                                    <span class="slider"></span>
+                                </label>
                             </div>
-                            <input type="range" v-model.number="globalPanX" min="-300" max="300"
-                                @input="updateAllPreviews">
                         </div>
-                        <div>
-                            <span style="font-size: 0.75rem; color: var(--text-muted);">Pan Y (px)</span>
-                            <div class="stepper-control" style="margin-bottom: 0.4rem;">
-                                <button type="button" class="stepper-btn"
-                                    @click="adjustValue('global', 'globalPanY', -1, -300, 300)">-</button>
-                                <input type="number" class="stepper-input" v-model.number="globalPanY"
-                                    @input="updateAllPreviews" min="-300" max="300">
-                                <button type="button" class="stepper-btn"
-                                    @click="adjustValue('global', 'globalPanY', 1, -300, 300)">+</button>
+
+                        <!-- Reset Database & Settings -->
+                        <div class="control-group" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                            <!-- Reset Settings Button -->
+                            <div v-if="!showResetConfirm">
+                                <button type="button" class="btn btn-secondary" @click="showResetConfirm = true">
+                                    ⚙️ Reset Global Settings
+                                </button>
                             </div>
-                            <input type="range" v-model.number="globalPanY" min="-300" max="300"
-                                @input="updateAllPreviews">
+                            <div v-else style="display: flex; gap: 0.5rem;">
+                                <button type="button" class="btn btn-secondary btn-danger" @click="confirmResetSettings" style="flex: 2; font-size: 0.85rem;">
+                                    Confirm Reset?
+                                </button>
+                                <button type="button" class="btn btn-secondary" @click="showResetConfirm = false" style="flex: 1; font-size: 0.85rem; padding: 0.5rem;">
+                                    Cancel
+                                </button>
+                            </div>
+
+                            <!-- Clear Templates Button -->
+                            <template v-if="labels.length > 0">
+                                <div v-if="!showClearConfirm">
+                                    <button type="button" class="btn btn-secondary btn-danger" @click="showClearConfirm = true">
+                                        🗑️ Clear Saved Templates
+                                    </button>
+                                </div>
+                                <div v-else style="display: flex; gap: 0.5rem;">
+                                    <button type="button" class="btn btn-danger" @click="confirmClearTemplates" style="flex: 2; font-size: 0.85rem;">
+                                        Confirm Delete?
+                                    </button>
+                                    <button type="button" class="btn btn-secondary" @click="showClearConfirm = false" style="flex: 1; font-size: 0.85rem; padding: 0.5rem;">
+                                        Cancel
+                                    </button>
+                                </div>
+                            </template>
                         </div>
                     </div>
-                </div>
-
-                <div class="control-group">
-                    <label for="font-size">Font Size (px)</label>
-                    <div class="stepper-control">
-                        <button type="button" class="stepper-btn"
-                            @click="adjustValue('global', 'fontSize', -1, 8, 200)">-</button>
-                        <input type="number" id="font-size" class="stepper-input" v-model.number="fontSize" min="8"
-                            max="200" @input="updateAllPreviews">
-                        <button type="button" class="stepper-btn"
-                            @click="adjustValue('global', 'fontSize', 1, 8, 200)">+</button>
-                    </div>
-                </div>
-
-                <div class="control-group">
-                    <label>Text Color</label>
-                    <div class="color-picker-container">
-                        <input type="color" v-model="textColor" @input="updateAllPreviews">
-                        <span style="font-family: monospace; font-size: 0.9rem;">{{ textColor.toUpperCase() }}</span>
-                    </div>
-                </div>
-
-                <!-- Previews toggles -->
-                <div class="control-group">
-                    <div class="section-title">Display Options</div>
-                    <div class="toggle-container">
-                        <label>Show 2" Circle Guide</label>
-                        <label class="switch">
-                            <input type="checkbox" v-model="showCircleGuide">
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-                </div>
-
-                <!-- Reset Database & Settings -->
-                <div class="control-group" style="margin-top: auto; display: flex; flex-direction: column; gap: 0.5rem;"
-                    v-if="labels.length > 0">
-                    <button class="btn btn-secondary" @click="resetSettingsToDefault">
-                        ⚙️ Reset Global Settings
-                    </button>
-                    <button class="btn btn-secondary btn-danger" @click="clearAllTemplates">
-                        🗑️ Clear Saved Templates
-                    </button>
                 </div>
             </div>
 
@@ -1275,6 +1370,7 @@
             data() {
                 return {
                     labels: [],
+                    globalSettingsExpanded: window.innerWidth >= 768,
                     globalMode: 'days', // 'days', 'custom-date', or 'static'
                     globalText: '',
                     globalDays: 4,
@@ -1294,7 +1390,9 @@
                     globalZoom: 0.97,
                     globalPanX: 2,
                     globalPanY: -8,
-                    searchQuery: ''
+                    searchQuery: '',
+                    showResetConfirm: false,
+                    showClearConfirm: false
                 }
             },
             computed: {
@@ -1711,33 +1809,31 @@
                         });
                     }
                 },
-                async clearAllTemplates() {
-                    if (confirm("Are you sure you want to delete all stored templates? This cannot be undone.")) {
-                        this.labels = [];
-                        this.imagesCache = {};
-                        this.canvasRefs = {};
-                        await saveLabelsToIDB([]);
-                    }
+                async confirmClearTemplates() {
+                    this.labels = [];
+                    this.imagesCache = {};
+                    this.canvasRefs = {};
+                    await saveLabelsToIDB([]);
+                    this.showClearConfirm = false;
                 },
-                resetSettingsToDefault() {
-                    if (confirm("Are you sure you want to reset all global settings back to default values?")) {
-                        this.globalMode = 'days';
-                        this.globalText = '';
-                        this.globalDays = 4;
-                        this.globalPrefix = '';
-                        this.globalDateFormat = 'MM/DD';
-                        this.globalBaseDate = this.getTodayDateString();
-                        this.xOffset = 20;
-                        this.yOffset = 56;
-                        this.fontSize = 38;
-                        this.textColor = '#000000';
-                        this.showCircleGuide = false;
-                        this.globalZoom = 0.97;
-                        this.globalPanX = 2;
-                        this.globalPanY = -8;
-                        this.saveSettings();
-                        this.updateAllPreviews();
-                    }
+                confirmResetSettings() {
+                    this.globalMode = 'days';
+                    this.globalText = '';
+                    this.globalDays = 4;
+                    this.globalPrefix = '';
+                    this.globalDateFormat = 'MM/DD';
+                    this.globalBaseDate = this.getTodayDateString();
+                    this.xOffset = 20;
+                    this.yOffset = 56;
+                    this.fontSize = 38;
+                    this.textColor = '#000000';
+                    this.showCircleGuide = false;
+                    this.globalZoom = 0.97;
+                    this.globalPanX = 2;
+                    this.globalPanY = -8;
+                    this.saveSettings();
+                    this.updateAllPreviews();
+                    this.showResetConfirm = false;
                 },
                 startPan(e, label) {
                     if (!label.customTransform) return;
