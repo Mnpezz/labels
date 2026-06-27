@@ -709,6 +709,65 @@
             gap: 1.25rem;
             border-top: 1px solid var(--border);
         }
+
+        /* Disabled input styles for locked labels */
+        .stepper-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+            background-color: transparent !important;
+        }
+
+        .stepper-input:disabled {
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        input[type="range"]:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        input[type="range"]:disabled::-webkit-slider-thumb {
+            background: var(--border) !important;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        input[type="range"]:disabled::-moz-range-thumb {
+            background: var(--border) !important;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        select:disabled,
+        input[type="text"]:disabled,
+        input[type="number"]:disabled,
+        input[type="date"]:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            background-color: rgba(15, 23, 42, 0.4) !important;
+        }
+
+        input:disabled+.slider {
+            background-color: rgba(51, 65, 85, 0.4) !important;
+            cursor: not-allowed;
+        }
+
+        input:disabled+.slider:before {
+            background-color: #64748b !important;
+        }
+
+        .btn-unlocked {
+            border-color: var(--accent) !important;
+            color: var(--accent) !important;
+            background-color: rgba(16, 185, 129, 0.05) !important;
+        }
+
+        .btn-unlocked:hover {
+            background-color: rgba(16, 185, 129, 0.15) !important;
+        }
     </style>
 </head>
 
@@ -931,10 +990,12 @@
                                 </button>
                             </div>
                             <div v-else style="display: flex; gap: 0.5rem;">
-                                <button type="button" class="btn btn-secondary btn-danger" @click="confirmResetSettings" style="flex: 2; font-size: 0.85rem;">
+                                <button type="button" class="btn btn-secondary btn-danger" @click="confirmResetSettings"
+                                    style="flex: 2; font-size: 0.85rem;">
                                     Confirm Reset?
                                 </button>
-                                <button type="button" class="btn btn-secondary" @click="showResetConfirm = false" style="flex: 1; font-size: 0.85rem; padding: 0.5rem;">
+                                <button type="button" class="btn btn-secondary" @click="showResetConfirm = false"
+                                    style="flex: 1; font-size: 0.85rem; padding: 0.5rem;">
                                     Cancel
                                 </button>
                             </div>
@@ -942,15 +1003,18 @@
                             <!-- Clear Templates Button -->
                             <template v-if="labels.length > 0">
                                 <div v-if="!showClearConfirm">
-                                    <button type="button" class="btn btn-secondary btn-danger" @click="showClearConfirm = true">
+                                    <button type="button" class="btn btn-secondary btn-danger"
+                                        @click="showClearConfirm = true">
                                         🗑️ Clear Saved Templates
                                     </button>
                                 </div>
                                 <div v-else style="display: flex; gap: 0.5rem;">
-                                    <button type="button" class="btn btn-danger" @click="confirmClearTemplates" style="flex: 2; font-size: 0.85rem;">
+                                    <button type="button" class="btn btn-danger" @click="confirmClearTemplates"
+                                        style="flex: 2; font-size: 0.85rem;">
                                         Confirm Delete?
                                     </button>
-                                    <button type="button" class="btn btn-secondary" @click="showClearConfirm = false" style="flex: 1; font-size: 0.85rem; padding: 0.5rem;">
+                                    <button type="button" class="btn btn-secondary" @click="showClearConfirm = false"
+                                        style="flex: 1; font-size: 0.85rem; padding: 0.5rem;">
                                         Cancel
                                     </button>
                                 </div>
@@ -1013,10 +1077,11 @@
                     <div class="labels-grid" v-else>
                         <div class="label-card" v-for="label in filteredLabels" :key="label.id">
                             <!-- Interactive Canvas Preview -->
-                            <div class="preview-wrapper" :class="{ 'interactive-drag': label.customTransform }"
+                            <div class="preview-wrapper"
+                                :class="{ 'interactive-drag': label.customTransform && !label.locked }"
                                 @mousedown="startPan($event, label)" @touchstart="startPan($event, label)"
                                 @wheel.prevent="handleWheel($event, label)"
-                                :title="label.customTransform ? 'Drag to Pan / Scroll to Zoom' : ''">
+                                :title="label.customTransform && !label.locked ? 'Drag to Pan / Scroll to Zoom' : ''">
                                 <canvas
                                     :ref="el => { if (el) { canvasRefs[label.id] = el; renderLabelToCanvas(label, el); } }"
                                     class="preview-canvas"></canvas>
@@ -1025,13 +1090,23 @@
 
                             <!-- Card details and input -->
                             <div class="card-details">
-                                <div class="filename-text" :title="label.name">{{ label.name }}</div>
+                                <div
+                                    style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                                    <div class="filename-text" :title="label.name" style="flex: 1;">{{ label.name }}
+                                    </div>
+                                    <button class="btn btn-secondary" :class="{ 'btn-unlocked': !label.locked }"
+                                        style="width: auto; padding: 0.35rem 0.6rem; font-size: 0.75rem; border-radius: 0.375rem; display: flex; align-items: center; gap: 0.25rem;"
+                                        @click="toggleLock(label)">
+                                        <span v-if="label.locked">🔒 Locked</span>
+                                        <span v-else>🔓 Unlocked</span>
+                                    </button>
+                                </div>
 
                                 <div class="control-group">
                                     <label style="font-size: 0.75rem; color: var(--text-muted);">Expiration
                                         Setting</label>
                                     <select v-model="label.mode" @change="updateSinglePreview(label)"
-                                        style="padding: 0.4rem; font-size: 0.85rem;">
+                                        style="padding: 0.4rem; font-size: 0.85rem;" :disabled="label.locked">
                                         <option value="inherit">Inherit Global Default</option>
                                         <option value="days">Custom Days from Today</option>
                                         <option value="custom-date">Custom Days from Date</option>
@@ -1054,17 +1129,20 @@
                                             <label style="font-size: 0.75rem; color: var(--text-muted);">Prefix</label>
                                             <input type="text" v-model="label.prefix"
                                                 @input="updateSinglePreview(label)" placeholder="EXP: "
-                                                style="padding: 0.4rem; font-size: 0.85rem;">
+                                                style="padding: 0.4rem; font-size: 0.85rem;" :disabled="label.locked">
                                         </div>
                                         <div>
                                             <label style="font-size: 0.75rem; color: var(--text-muted);">Days</label>
                                             <div class="stepper-control">
                                                 <button type="button" class="stepper-btn"
-                                                    @click="adjustValue(label, 'days', -1, 0)">-</button>
+                                                    @click="adjustValue(label, 'days', -1, 0)"
+                                                    :disabled="label.locked">-</button>
                                                 <input type="number" class="stepper-input" v-model.number="label.days"
-                                                    @input="updateSinglePreview(label)" min="0">
+                                                    @input="updateSinglePreview(label)" min="0"
+                                                    :disabled="label.locked">
                                                 <button type="button" class="stepper-btn"
-                                                    @click="adjustValue(label, 'days', 1, 0)">+</button>
+                                                    @click="adjustValue(label, 'days', 1, 0)"
+                                                    :disabled="label.locked">+</button>
                                             </div>
                                         </div>
                                     </div>
@@ -1078,24 +1156,27 @@
                                     <div style="margin-bottom: 0.4rem;">
                                         <label style="font-size: 0.75rem; color: var(--text-muted);">Base Date</label>
                                         <input type="date" v-model="label.baseDate" @change="updateSinglePreview(label)"
-                                            style="padding: 0.4rem; font-size: 0.85rem;">
+                                            style="padding: 0.4rem; font-size: 0.85rem;" :disabled="label.locked">
                                     </div>
                                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem;">
                                         <div>
                                             <label style="font-size: 0.75rem; color: var(--text-muted);">Prefix</label>
                                             <input type="text" v-model="label.prefix"
                                                 @input="updateSinglePreview(label)" placeholder="EXP: "
-                                                style="padding: 0.4rem; font-size: 0.85rem;">
+                                                style="padding: 0.4rem; font-size: 0.85rem;" :disabled="label.locked">
                                         </div>
                                         <div>
                                             <label style="font-size: 0.75rem; color: var(--text-muted);">Days</label>
                                             <div class="stepper-control">
                                                 <button type="button" class="stepper-btn"
-                                                    @click="adjustValue(label, 'days', -1, 0)">-</button>
+                                                    @click="adjustValue(label, 'days', -1, 0)"
+                                                    :disabled="label.locked">-</button>
                                                 <input type="number" class="stepper-input" v-model.number="label.days"
-                                                    @input="updateSinglePreview(label)" min="0">
+                                                    @input="updateSinglePreview(label)" min="0"
+                                                    :disabled="label.locked">
                                                 <button type="button" class="stepper-btn"
-                                                    @click="adjustValue(label, 'days', 1, 0)">+</button>
+                                                    @click="adjustValue(label, 'days', 1, 0)"
+                                                    :disabled="label.locked">+</button>
                                             </div>
                                         </div>
                                     </div>
@@ -1109,7 +1190,8 @@
                                     <label style="font-size: 0.75rem; color: var(--text-muted);">Custom Expiration
                                         Text</label>
                                     <input type="text" v-model="label.staticText" @input="updateSinglePreview(label)"
-                                        placeholder="e.g. EXP: 12/28" style="padding: 0.4rem; font-size: 0.85rem;">
+                                        placeholder="e.g. EXP: 12/28" style="padding: 0.4rem; font-size: 0.85rem;"
+                                        :disabled="label.locked">
                                 </div>
 
                                 <!-- Custom Position Override -->
@@ -1120,7 +1202,7 @@
                                         <label class="switch"
                                             style="transform: scale(0.85); transform-origin: right center;">
                                             <input type="checkbox" v-model="label.customPosition"
-                                                @change="toggleCustomPosition(label)">
+                                                @change="toggleCustomPosition(label)" :disabled="label.locked">
                                             <span class="slider"></span>
                                         </label>
                                     </div>
@@ -1132,36 +1214,40 @@
                                                 (px)</span>
                                             <div class="stepper-control" style="margin-bottom: 0.3rem;">
                                                 <button type="button" class="stepper-btn"
-                                                    @click="adjustValue(label, 'xOffset', -1, -300, 300)">-</button>
+                                                    @click="adjustValue(label, 'xOffset', -1, -300, 300)"
+                                                    :disabled="label.locked">-</button>
                                                 <input type="number" class="stepper-input"
                                                     v-model.number="label.xOffset" @input="updateSinglePreview(label)"
-                                                    min="-300" max="300">
+                                                    min="-300" max="300" :disabled="label.locked">
                                                 <button type="button" class="stepper-btn"
-                                                    @click="adjustValue(label, 'xOffset', 1, -300, 300)">+</button>
+                                                    @click="adjustValue(label, 'xOffset', 1, -300, 300)"
+                                                    :disabled="label.locked">+</button>
                                             </div>
                                             <input type="range" v-model.number="label.xOffset" min="-300" max="300"
-                                                @input="updateSinglePreview(label)">
+                                                @input="updateSinglePreview(label)" :disabled="label.locked">
                                         </div>
                                         <div>
                                             <span style="font-size: 0.7rem; color: var(--text-muted);">Y Offset
                                                 (px)</span>
                                             <div class="stepper-control" style="margin-bottom: 0.3rem;">
                                                 <button type="button" class="stepper-btn"
-                                                    @click="adjustValue(label, 'yOffset', -1, -300, 300)">-</button>
+                                                    @click="adjustValue(label, 'yOffset', -1, -300, 300)"
+                                                    :disabled="label.locked">-</button>
                                                 <input type="number" class="stepper-input"
                                                     v-model.number="label.yOffset" @input="updateSinglePreview(label)"
-                                                    min="-300" max="300">
+                                                    min="-300" max="300" :disabled="label.locked">
                                                 <button type="button" class="stepper-btn"
-                                                    @click="adjustValue(label, 'yOffset', 1, -300, 300)">+</button>
+                                                    @click="adjustValue(label, 'yOffset', 1, -300, 300)"
+                                                    :disabled="label.locked">+</button>
                                             </div>
                                             <input type="range" v-model.number="label.yOffset" min="-300" max="300"
-                                                @input="updateSinglePreview(label)">
+                                                @input="updateSinglePreview(label)" :disabled="label.locked">
                                         </div>
                                     </div>
                                     <div style="margin-top: 0.4rem; text-align: right;">
                                         <button type="button" class="btn btn-secondary"
                                             style="font-size: 0.75rem; padding: 0.2rem 0.5rem;"
-                                            @click="resetCustomPosition(label)">
+                                            @click="resetCustomPosition(label)" :disabled="label.locked">
                                             Reset to Global
                                         </button>
                                     </div>
@@ -1175,7 +1261,7 @@
                                         <label class="switch"
                                             style="transform: scale(0.85); transform-origin: right center;">
                                             <input type="checkbox" v-model="label.customTransform"
-                                                @change="toggleCustomTransform(label)">
+                                                @change="toggleCustomTransform(label)" :disabled="label.locked">
                                             <span class="slider"></span>
                                         </label>
                                     </div>
@@ -1186,14 +1272,17 @@
                                     <span style="font-size: 0.75rem; color: var(--text-muted);">Label Zoom</span>
                                     <div class="stepper-control" style="margin-bottom: 0.3rem;">
                                         <button type="button" class="stepper-btn"
-                                            @click="adjustValue(label, 'zoom', -0.01, 0.5, 2.5, true)">-</button>
+                                            @click="adjustValue(label, 'zoom', -0.01, 0.5, 2.5, true)"
+                                            :disabled="label.locked">-</button>
                                         <input type="number" class="stepper-input" v-model.number="label.zoom"
-                                            @input="updateSinglePreview(label)" min="0.5" max="2.5" step="0.01">
+                                            @input="updateSinglePreview(label)" min="0.5" max="2.5" step="0.01"
+                                            :disabled="label.locked">
                                         <button type="button" class="stepper-btn"
-                                            @click="adjustValue(label, 'zoom', 0.01, 0.5, 2.5, true)">+</button>
+                                            @click="adjustValue(label, 'zoom', 0.01, 0.5, 2.5, true)"
+                                            :disabled="label.locked">+</button>
                                     </div>
                                     <input type="range" v-model.number="label.zoom" min="0.5" max="2.5" step="0.01"
-                                        @input="updateSinglePreview(label)">
+                                        @input="updateSinglePreview(label)" :disabled="label.locked">
                                 </div>
 
                                 <!-- Label Pan -->
@@ -1205,33 +1294,39 @@
                                             <span style="font-size: 0.7rem; color: var(--text-muted);">Pan X (px)</span>
                                             <div class="stepper-control" style="margin-bottom: 0.3rem;">
                                                 <button type="button" class="stepper-btn"
-                                                    @click="adjustValue(label, 'panX', -1, -300, 300)">-</button>
+                                                    @click="adjustValue(label, 'panX', -1, -300, 300)"
+                                                    :disabled="label.locked">-</button>
                                                 <input type="number" class="stepper-input" v-model.number="label.panX"
-                                                    @input="updateSinglePreview(label)" min="-300" max="300">
+                                                    @input="updateSinglePreview(label)" min="-300" max="300"
+                                                    :disabled="label.locked">
                                                 <button type="button" class="stepper-btn"
-                                                    @click="adjustValue(label, 'panX', 1, -300, 300)">+</button>
+                                                    @click="adjustValue(label, 'panX', 1, -300, 300)"
+                                                    :disabled="label.locked">+</button>
                                             </div>
                                             <input type="range" v-model.number="label.panX" min="-300" max="300"
-                                                @input="updateSinglePreview(label)">
+                                                @input="updateSinglePreview(label)" :disabled="label.locked">
                                         </div>
                                         <div>
                                             <span style="font-size: 0.7rem; color: var(--text-muted);">Pan Y (px)</span>
                                             <div class="stepper-control" style="margin-bottom: 0.3rem;">
                                                 <button type="button" class="stepper-btn"
-                                                    @click="adjustValue(label, 'panY', -1, -300, 300)">-</button>
+                                                    @click="adjustValue(label, 'panY', -1, -300, 300)"
+                                                    :disabled="label.locked">-</button>
                                                 <input type="number" class="stepper-input" v-model.number="label.panY"
-                                                    @input="updateSinglePreview(label)" min="-300" max="300">
+                                                    @input="updateSinglePreview(label)" min="-300" max="300"
+                                                    :disabled="label.locked">
                                                 <button type="button" class="stepper-btn"
-                                                    @click="adjustValue(label, 'panY', 1, -300, 300)">+</button>
+                                                    @click="adjustValue(label, 'panY', 1, -300, 300)"
+                                                    :disabled="label.locked">+</button>
                                             </div>
                                             <input type="range" v-model.number="label.panY" min="-300" max="300"
-                                                @input="updateSinglePreview(label)">
+                                                @input="updateSinglePreview(label)" :disabled="label.locked">
                                         </div>
                                     </div>
                                     <div style="margin-top: 0.4rem; text-align: right;">
                                         <button type="button" class="btn btn-secondary"
                                             style="font-size: 0.75rem; padding: 0.2rem 0.5rem;"
-                                            @click="resetCustomTransform(label)">
+                                            @click="resetCustomTransform(label)" :disabled="label.locked">
                                             Reset to Global
                                         </button>
                                     </div>
@@ -1242,11 +1337,13 @@
                                     <label style="font-size: 0.75rem; color: var(--text-muted);">Print Quantity</label>
                                     <div class="stepper-control">
                                         <button type="button" class="stepper-btn"
-                                            @click="adjustValue(label, 'quantity', -1, 1)">-</button>
+                                            @click="adjustValue(label, 'quantity', -1, 1)"
+                                            :disabled="label.locked">-</button>
                                         <input type="number" class="stepper-input" v-model.number="label.quantity"
-                                            @change="persistLabels" min="1" placeholder="1">
+                                            @change="persistLabels" min="1" placeholder="1" :disabled="label.locked">
                                         <button type="button" class="stepper-btn"
-                                            @click="adjustValue(label, 'quantity', 1, 1)">+</button>
+                                            @click="adjustValue(label, 'quantity', 1, 1)"
+                                            :disabled="label.locked">+</button>
                                     </div>
                                 </div>
 
@@ -1330,7 +1427,8 @@
                         zoom: label.zoom !== undefined ? label.zoom : null,
                         panX: label.panX !== undefined ? label.panX : null,
                         panY: label.panY !== undefined ? label.panY : null,
-                        customTransform: label.customTransform !== undefined ? label.customTransform : false
+                        customTransform: label.customTransform !== undefined ? label.customTransform : false,
+                        locked: label.locked !== undefined ? label.locked : true
                     });
                     req.onsuccess = () => resolve();
                     req.onerror = () => reject(req.error);
@@ -1460,7 +1558,8 @@
                             zoom: s.zoom !== undefined && s.zoom !== null ? s.zoom : null,
                             panX: s.panX !== undefined && s.panX !== null ? s.panX : null,
                             panY: s.panY !== undefined && s.panY !== null ? s.panY : null,
-                            customTransform: s.customTransform || false
+                            customTransform: s.customTransform || false,
+                            locked: s.locked !== undefined ? s.locked : true
                         }));
 
                         this.$nextTick(() => {
@@ -1530,7 +1629,8 @@
                                 zoom: null,
                                 panX: null,
                                 panY: null,
-                                customTransform: false
+                                customTransform: false,
+                                locked: true
                             };
                             this.labels.push(newLabel);
                             loadedCount++;
@@ -1556,6 +1656,7 @@
                             { name: 'ginger breeze.png', path: 'labels/ginger breeze.png' },
                             { name: 'green dream.png', path: 'labels/green dream.png' },
                             { name: 'guardian.png', path: 'labels/guardian.png' },
+                            { name: 'Honeyglow.png', path: 'labels/Honeyglow.png' },
                             { name: 'hot tropics.png', path: 'labels/hot tropics.png' },
                             { name: 'saly all day.png', path: 'labels/saly all day.png' },
                             { name: 'summer breeze.png', path: 'labels/summer breeze.png' },
@@ -1582,7 +1683,8 @@
                                 zoom: null,
                                 panX: null,
                                 panY: null,
-                                customTransform: false
+                                customTransform: false,
+                                locked: true
                             };
                             this.labels.push(newLabel);
                         }
@@ -1749,6 +1851,10 @@
                         this.renderLabelToCanvas(label, canvas);
                     }
                 },
+                toggleLock(label) {
+                    label.locked = !label.locked;
+                    this.persistLabels();
+                },
                 toggleCustomPosition(label) {
                     if (label.customPosition) {
                         if (label.xOffset === null || label.xOffset === undefined) {
@@ -1836,7 +1942,7 @@
                     this.showResetConfirm = false;
                 },
                 startPan(e, label) {
-                    if (!label.customTransform) return;
+                    if (!label.customTransform || label.locked) return;
                     e.preventDefault();
 
                     const startX = e.type.startsWith('touch') ? e.touches[0].clientX : e.clientX;
@@ -1881,7 +1987,7 @@
                     document.addEventListener('touchend', onEnd);
                 },
                 handleWheel(e, label) {
-                    if (!label.customTransform) return;
+                    if (!label.customTransform || label.locked) return;
 
                     const zoomStep = e.deltaY * -0.001;
                     label.zoom = Number(Math.max(0.5, Math.min(2.5, (label.zoom || 1.0) + zoomStep)).toFixed(2));
