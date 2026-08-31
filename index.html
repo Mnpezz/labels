@@ -1114,11 +1114,11 @@
                                     </select>
                                 </div>
 
-                                <!-- If Inheriting -->
+                                 <!-- If Inheriting -->
                                 <div class="control-group" v-if="label.mode === 'inherit'">
                                     <label style="font-size: 0.75rem; color: var(--text-muted);">Computed Label
                                         Text</label>
-                                    <input type="text" :placeholder="calculatedGlobalPreview" disabled
+                                    <input type="text" :placeholder="getLabelDisplay(label)" disabled
                                         style="opacity: 0.6; padding: 0.4rem; font-size: 0.85rem;">
                                 </div>
 
@@ -1138,6 +1138,7 @@
                                                     @click="adjustValue(label, 'days', -1, 0)"
                                                     :disabled="label.locked">-</button>
                                                 <input type="number" class="stepper-input" v-model.number="label.days"
+                                                    :placeholder="getJuiceDefaultDays(label.name)"
                                                     @input="updateSinglePreview(label)" min="0"
                                                     :disabled="label.locked">
                                                 <button type="button" class="stepper-btn"
@@ -1172,6 +1173,7 @@
                                                     @click="adjustValue(label, 'days', -1, 0)"
                                                     :disabled="label.locked">-</button>
                                                 <input type="number" class="stepper-input" v-model.number="label.days"
+                                                    :placeholder="getJuiceDefaultDays(label.name)"
                                                     @input="updateSinglePreview(label)" min="0"
                                                     :disabled="label.locked">
                                                 <button type="button" class="stepper-btn"
@@ -1747,6 +1749,17 @@
 
                     return `${prefix || ''}${dateStr}`;
                 },
+                getJuiceDefaultDays(name) {
+                    if (!name) return this.globalDays;
+                    const norm = name.toLowerCase().replace(/\.[^/.]+$/, "").trim();
+                    if (norm === 'sweet and sour') return 5;
+                    if (norm === 'saly all day' || norm === 'slay all day') return 3;
+                    if (norm === 'hot tropics') return 6;
+                    if (norm === 'guardian') return 6;
+                    if (norm === 'ginger breeze') return 6;
+                    if (norm === 'daily dose') return 3;
+                    return this.globalDays;
+                },
                 getLabelDisplay(label) {
                     const mode = label.mode === 'inherit' ? this.globalMode : label.mode;
 
@@ -1758,7 +1771,7 @@
                     } else {
                         // days or custom-date mode
                         const isInherit = label.mode === 'inherit';
-                        const days = isInherit ? this.globalDays : label.days;
+                        const days = isInherit ? this.getJuiceDefaultDays(label.name) : (label.days !== null && label.days !== undefined && label.days !== '' ? label.days : this.getJuiceDefaultDays(label.name));
                         const prefix = isInherit ? this.globalPrefix : label.prefix;
                         const format = this.globalDateFormat;
 
@@ -1833,7 +1846,16 @@
                 },
                 adjustValue(obj, key, amount, min, max, isFloat = false) {
                     const target = (!obj || obj === 'global') ? this : obj;
-                    let val = target[key] !== undefined && target[key] !== null ? Number(target[key]) : 0;
+                    let val = null;
+                    if (target[key] !== undefined && target[key] !== null && target[key] !== '') {
+                        val = Number(target[key]);
+                    } else {
+                        if (key === 'days' && target !== this) {
+                            val = this.getJuiceDefaultDays(target.name);
+                        } else {
+                            val = 0;
+                        }
+                    }
                     val += amount;
                     if (min !== undefined) val = Math.max(min, val);
                     if (max !== undefined) val = Math.min(max, val);
